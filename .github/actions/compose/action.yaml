@@ -20,7 +20,7 @@ inputs:
   timewait:
     description: time to serving
     required: false
-    default: 1800
+    default: 18000
   pull_image:
     description: pull image before test
     required: false
