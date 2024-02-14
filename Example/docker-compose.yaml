@@ -4,7 +4,7 @@ services:
   runner:
     image: ledanghuy/workspace:github_runner_ubuntu2204
     environment:
-      - LABELS=github_runner_ubuntu2204
+      - LABELS=github_runner_ubuntu2204,free
       - REPO_URL=${REPO_URL}
       - ACCESS_TOKEN=${GH_ACCESS_TOKEN}
     deploy:
