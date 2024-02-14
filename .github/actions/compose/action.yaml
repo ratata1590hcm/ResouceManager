@@ -17,6 +17,10 @@ inputs:
     description: timeout to wait
     required: false
     default: 300
+  timewait:
+    description: time to serving
+    required: false
+    default: 1800
   pull_image:
     description: pull image before test
     required: false
@@ -114,6 +118,9 @@ runs:
 
             sleep 5 # Check every 5 seconds
         done
+
+    - shell: bash
+      run: sleep ${{ inputs.timewait }}
 
     - shell: bash
       if: (steps.check_health.outputs.SKIP == 'false') && always()
