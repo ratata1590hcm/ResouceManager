@@ -1,4 +1,4 @@
-  name: docker Image compose test
+name: docker Image compose test
 description: docker Image compose test
 inputs:
   docker_host:
