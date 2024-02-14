@@ -1,0 +1,56 @@
+name: Check have running workflow and rerun
+description: Check have running workflow and rerun
+inputs:
+  github_token:
+    description: GitHub Token
+    required: true
+    default: ${{ github.token }}
+  workflow_name:
+    description: workflow name to check
+    required: true
+  rerun:
+    required: false
+    default: true
+
+runs:
+  using: composite
+  steps:
+    - name: Check running workflow and rerun
+      run: |
+        # Fetch the workflow runs
+        WORKFLOW_ID=$(curl -s -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ inputs.github_token }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          https://api.github.com/repos/${{ github.repository }}/actions/workflows | jq -r '.workflows[] | select(.name == "${{ inputs.workflow_name }}") | .id')
+
+        RUNS=$(curl -s -L \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ inputs.github_token }}" \
+          -H "X-GitHub-Api-Version: 2022-11-28" \
+          "https://api.github.com/repos/${{ github.repository }}/actions/runs" | jq -r --arg WORKFLOW_ID "${WORKFLOW_ID}" --arg CURRENT_RUN_ID "${{ github.run_id }}" '.workflow_runs[] | select(.workflow_id == ($WORKFLOW_ID | tonumber) and .id != ($CURRENT_RUN_ID | tonumber)) | .id')
+
+        # Loop over each run and delete its logs
+        for RUN in $RUNS; do
+          echo "Deleting logs for run: $RUN"
+
+          STATUS=$(curl -s -L \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ inputs.github_token }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/runs/$RUN" | jq -r '.status')
+
+          if [ "$STATUS" == "in_progress" ]; then
+            echo "${{ inputs.workflow_name }} have running process"
+            exit 1
+          fi
+        done
+        if [ "${{ inputs.rerun }}" == "true" ]; then
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ inputs.github_token }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28"  \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/${WORKFLOW_ID}/dispatches \
+            -d '{"ref":"main"}'
+        fi
+      shell: bash

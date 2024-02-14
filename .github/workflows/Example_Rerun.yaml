@@ -1,0 +1,29 @@
+name: Example_Rerun
+
+on:
+  workflow_run:
+    workflows:
+      - Example
+    types:
+      - completed
+    branches:
+      - DevOps
+      - main
+  workflow_dispatch: {}
+
+jobs:
+  no_operation_job:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cleanup previous logs
+        uses: ./DevOps/ci_cd/actions/clean-old-run
+        with:
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          cancel_run: false
+      - name: Rerun if dont have any running one
+        uses: ./DevOps/ci_cd/actions/check-have-running-workflow
+        with:
+          github_token: ${{ secrets.GH_ACCESS_TOKEN }}
+          workflow_name: DevOps-Docker-workspace-deploy
+          rerun: true
