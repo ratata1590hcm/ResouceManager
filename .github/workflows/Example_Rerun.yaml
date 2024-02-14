@@ -15,6 +15,13 @@ jobs:
   no_operation_job:
     runs-on: ubuntu-latest
     steps:
+      - name: Check Build Success and Proceed Conditionally
+        run: |
+          if [ "${{ github.event.workflow_run.conclusion }}" == "cancelled" ]; then
+            echo "Build was cancelled"
+            exit 1
+          fi
+        id: check_success
       - uses: actions/checkout@v4
       - name: Cleanup previous logs
         uses: ./.github/actions/clean-old-run
