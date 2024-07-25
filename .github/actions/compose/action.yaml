@@ -122,6 +122,8 @@ runs:
 
     - shell: bash
       run: |
+        cd ${{ github.workspace }}
+        cd ${{ inputs.base_path }}
         docker-compose -f ${{ inputs.compose_file }} logs
         sleep ${{ inputs.timewait }}
 
