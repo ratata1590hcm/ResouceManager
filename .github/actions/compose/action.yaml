@@ -121,7 +121,9 @@ runs:
         done
 
     - shell: bash
-      run: sleep ${{ inputs.timewait }}
+      run: |
+        docker compose logs
+        sleep ${{ inputs.timewait }}
 
     - shell: bash
       if: (steps.check_health.outputs.SKIP == 'false') && always()
