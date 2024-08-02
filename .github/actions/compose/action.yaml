@@ -48,7 +48,7 @@ runs:
         docker system prune -a -f
 
         if [ "${{ inputs.pull_image }}" == "true" ]; then
-          docker-compose pull
+          docker compose pull
         fi
 
         docker-compose -f ${{ inputs.compose_file }} up  -d
@@ -64,7 +64,7 @@ runs:
 
         # Function to check the health status of all services
         check_services_status() {
-            services=$(docker-compose config --services)
+            services=$(docker compose config --services)
             all_started=true
             any_unhealthy=false
 
@@ -124,7 +124,7 @@ runs:
       run: |
         cd ${{ github.workspace }}
         cd ${{ inputs.base_path }}
-        docker-compose -f ${{ inputs.compose_file }} logs
+        docker compose -f ${{ inputs.compose_file }} logs
         sleep ${{ inputs.timewait }}
 
     - shell: bash
@@ -132,4 +132,4 @@ runs:
       run: |
         cd ${{ github.workspace }}
         cd ${{ inputs.base_path }}
-        docker-compose -f ${{ inputs.compose_file }} down
+        docker compose -f ${{ inputs.compose_file }} down
