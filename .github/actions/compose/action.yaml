@@ -70,7 +70,7 @@ runs:
 
             for service in $services; do
                 # Fetch the health status of the service
-                health_status=$(docker inspect --format='{{.State.Health.Status}}' "$(docker-compose ps -q $service)" 2>/dev/null)
+                health_status=$(docker inspect --format='{{.State.Health.Status}}' "$(docker compose ps -q $service)" 2>/dev/null)
 
                 # Skip services with no health check
                 if [ "$health_status" = "" ]; then
