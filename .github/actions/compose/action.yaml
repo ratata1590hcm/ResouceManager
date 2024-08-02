@@ -51,7 +51,7 @@ runs:
           docker compose pull
         fi
 
-        docker-compose -f ${{ inputs.compose_file }} up  -d
+        docker compose -f ${{ inputs.compose_file }} up  -d
         echo "SKIP=false" >> $GITHUB_OUTPUT
         if [ "${{ inputs.skip_composedown }}" == "true" ]; then
           echo "SKIP=true" >> $GITHUB_OUTPUT
