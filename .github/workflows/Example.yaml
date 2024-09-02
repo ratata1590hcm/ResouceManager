@@ -9,9 +9,9 @@ jobs:
     steps:
       - name: Check Build Success and Proceed Conditionally
         run: |
-          rm -rf /opt/hostedtoolcache
-          rm -rf /usr/local/lib/android
-          rm -rf /usr/local/share/powershell
+          sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/local/share/powershell
           if [ "${{ github.event.workflow_run.conclusion }}" == "success" ]; then
             echo "Build was successful,start the deploy."
             echo "DEPLOY=true" >> $GITHUB_OUTPUT
