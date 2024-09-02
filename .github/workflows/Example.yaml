@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Check Build Success and Proceed Conditionally
         run: |
-          docker run -ti -v /:/host_machine bash -c "rm -rf /host_machine/opt/hostedtoolcache /host_machine/usr/local/lib/android /host_machine/usr/local/share/powershell"
+          docker run -v /:/host_machine bash -c "rm -rf /host_machine/opt/hostedtoolcache /host_machine/usr/local/lib/android /host_machine/usr/local/share/powershell"
           if [ "${{ github.event.workflow_run.conclusion }}" == "success" ]; then
             echo "Build was successful,start the deploy."
             echo "DEPLOY=true" >> $GITHUB_OUTPUT
