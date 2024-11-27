@@ -1,10 +1,6 @@
 name: docker Image compose test
 description: docker Image compose test
 inputs:
-  docker_host:
-    description: 'DOCKER_HOST if set remote ex: "tcp://HOST:2375" or "unix:///var/run/docker.sock" or "ssh://me@example.com:22/var/run/docker.sock"'
-    required: false
-    default: unix:///var/run/docker.sock
   base_path:
     description: base path will be src
     required: false
@@ -25,13 +21,6 @@ inputs:
     description: pull image before test
     required: false
     default: true
-  scan:
-    description: security scan all image in compose
-    required: false
-    default: true
-  trivy_path:
-    description: trivy config path
-    required: false
   skip_composedown:
     description: deploy mode will skip compose down
     required: false
@@ -48,10 +37,10 @@ runs:
         docker system prune -a -f
 
         if [ "${{ inputs.pull_image }}" == "true" ]; then
-          docker compose pull
+          docker compose pull > /dev/null
         fi
 
-        docker compose -f ${{ inputs.compose_file }} up  -d
+        docker compose -f ${{ inputs.compose_file }} up -d
         echo "SKIP=false" >> $GITHUB_OUTPUT
         if [ "${{ inputs.skip_composedown }}" == "true" ]; then
           echo "SKIP=true" >> $GITHUB_OUTPUT
@@ -61,36 +50,30 @@ runs:
         TIMEOUT=${{ inputs.timeout }}
         START_TIME=$(date +%s)
         END_TIME=$((START_TIME + TIMEOUT))
+        SLEEP_INTERVAL=5
 
-        # Function to check the health status of all services
+        # Function to check health status of all services
         check_services_status() {
             services=$(docker compose config --services)
             all_started=true
             any_unhealthy=false
 
             for service in $services; do
-                # Fetch the health status of the service
                 health_status=$(docker inspect --format='{{.State.Health.Status}}' "$(docker compose ps -q $service)" 2>/dev/null)
 
-                # Skip services with no health check
                 if [ "$health_status" = "" ]; then
                     continue
                 fi
-
-                # Check if any service is still starting
                 if [ "$health_status" = "starting" ]; then
                     all_started=false
-                    break # Exit the loop early as we need to wait more
+                    break
                 fi
-
-                # Check if any service is unhealthy
                 if [ "$health_status" = "unhealthy" ]; then
                     any_unhealthy=true
-                    break # Exit the loop early as we found an unhealthy service
+                    break
                 fi
             done
 
-            # Return status based on the checks above
             if [ "$all_started" = true ] && [ "$any_unhealthy" = false ]; then
                 echo "healthy"
             elif [ "$any_unhealthy" = true ]; then
@@ -100,7 +83,7 @@ runs:
             fi
         }
 
-        # Main loop to check service statuses
+        # Main loop to check service health statuses
         while true; do
             status=$(check_services_status)
 
@@ -113,11 +96,15 @@ runs:
             fi
 
             if [ "$(date +%s)" -ge "$END_TIME" ]; then
-                echo "Timeout reached. Some services might not be ready."
+                echo "Timeout reached. Following services did not become healthy:"
+                for service in $services; do
+                    health_status=$(docker inspect --format='{{.State.Health.Status}}' "$(docker compose ps -q $service)" 2>/dev/null)
+                    echo "Service: $service, Health Status: ${health_status:-no-healthcheck}"
+                done
                 exit 1
             fi
 
-            sleep 5 # Check every 5 seconds
+            sleep $SLEEP_INTERVAL
         done
 
     - shell: bash
@@ -132,4 +119,4 @@ runs:
       run: |
         cd ${{ github.workspace }}
         cd ${{ inputs.base_path }}
-        docker compose -f ${{ inputs.compose_file }} down
+        docker compose -f ${{ inputs.compose_file }} down -v
