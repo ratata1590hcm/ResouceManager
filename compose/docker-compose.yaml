@@ -1,6 +1,6 @@
 services:
   runner:
-    image: ledanghuy/workspace:github_runner_ubuntu2204
+    image: ledanghuy/workspace:github_runner_ubuntu2204-minimal
     environment:
       - LABELS=github_runner_ubuntu2204,free
       - REPO_URL=${REPO_URL}
