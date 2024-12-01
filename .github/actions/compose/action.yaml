@@ -13,18 +13,10 @@ inputs:
     description: timeout to wait
     required: false
     default: 300
-  timewait:
-    description: time to serving
-    required: false
-    default: 18000
   pull_image:
     description: pull image before test
     required: false
     default: true
-  skip_composedown:
-    description: deploy mode will skip compose down
-    required: false
-    default: false
 
 runs:
   using: composite
@@ -34,17 +26,15 @@ runs:
       run: |
         cd ${{ github.workspace }}
         cd ${{ inputs.base_path }}
-        docker system prune -a -f
+        docker system prune -a -f > /dev/null
+        echo "cleaned"
 
         if [ "${{ inputs.pull_image }}" == "true" ]; then
-          docker compose pull > /dev/null
+          docker compose pull -q
+          echo "pulled"
         fi
 
         docker compose -f ${{ inputs.compose_file }} up -d
-        echo "SKIP=false" >> $GITHUB_OUTPUT
-        if [ "${{ inputs.skip_composedown }}" == "true" ]; then
-          echo "SKIP=true" >> $GITHUB_OUTPUT
-        fi
 
         # Timeout in seconds
         TIMEOUT=${{ inputs.timeout }}
@@ -92,6 +82,7 @@ runs:
                 exit 0
             elif [ "$status" = "unhealthy" ]; then
                 echo "At least one service is unhealthy."
+                docker compose -f ${{ inputs.compose_file }} logs
                 exit 1
             fi
 
@@ -111,12 +102,5 @@ runs:
       run: |
         cd ${{ github.workspace }}
         cd ${{ inputs.base_path }}
-        docker compose -f ${{ inputs.compose_file }} logs
-        sleep ${{ inputs.timewait }}
-
-    - shell: bash
-      if: (steps.check_health.outputs.SKIP == 'false') && always()
-      run: |
-        cd ${{ github.workspace }}
-        cd ${{ inputs.base_path }}
-        docker compose -f ${{ inputs.compose_file }} down -v
+        trap "echo 'Timeout reached, cleaning up...' && docker compose down -v" EXIT
+        sleep infinity
