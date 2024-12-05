@@ -102,8 +102,3 @@ jobs:
         uses: ./.github/actions/compose
         with:
           base_path: compose
-
-      - name: Exit
-        run: |
-          docker compose down -v
-          exit 0

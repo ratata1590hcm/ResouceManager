@@ -103,4 +103,4 @@ runs:
         cd ${{ github.workspace }}
         cd ${{ inputs.base_path }}
         trap "echo 'Timeout reached, cleaning up...' && docker compose down -v" EXIT
-        timeout 345m sleep infinity
+        timeout 345m sleep infinity || true
